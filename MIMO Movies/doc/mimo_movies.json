@@ -1,0 +1,1231 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "info": {
+    "title": "MIMO Movies",
+    "description": "API para gestionar películas, valoraciones y watchlist de usuarios.",
+    "contact": {
+      "name": "Eduardo Lanchares",
+      "email": "elancharespu@upsa.es"
+    },
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "movies",
+      "description": "Películas"
+    },
+    {
+      "name": "ratings",
+      "description": "Valoraciones"
+    },
+    {
+      "name": "watchlist",
+      "description": "Watchlist"
+    }
+  ],
+  "paths": {
+    "/movies": {
+      "get": {
+        "summary": "Listar películas",
+        "description": "Obtiene la lista de películas con paginación",
+        "operationId": "getMovies",
+        "tags": ["movies"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página para paginación",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de resultados por página",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de películas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movies/{movieId}": {
+      "get": {
+        "summary": "Obtener película",
+        "description": "Obtiene los detalles de una película específica",
+        "operationId": "getMovie",
+        "tags": ["movies"],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles de la película",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movies/{movieId}/ratings": {
+      "get": {
+        "summary": "Listar valoraciones de película",
+        "description": "Obtiene las valoraciones de una película con paginación",
+        "operationId": "getMovieRatings",
+        "tags": ["ratings"],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página para paginación",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de resultados por página",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de valoraciones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear valoración",
+        "description": "Crea una valoración para una película. Un usuario solo puede valorar una película una vez.",
+        "operationId": "createMovieRating",
+        "tags": ["ratings"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Valoración creada",
+            "headers": {
+              "Location": {
+                "description": "URL del recurso creado",
+                "schema": {
+                  "type": "string",
+                  "example": "/movies/1/ratings/100"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "El usuario ya ha valorado esta película",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Datos de valoración inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movies/{movieId}/ratings/{ratingId}": {
+      "get": {
+        "summary": "Obtener valoración",
+        "description": "Obtiene una valoración específica de una película",
+        "operationId": "getMovieRating",
+        "tags": ["ratings"],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "ratingId",
+            "in": "path",
+            "description": "ID de la valoración",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 100
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles de la valoración",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película o valoración no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Modificar valoración",
+        "description": "Modifica una valoración existente. Solo el autor puede modificarla.",
+        "operationId": "updateMovieRating",
+        "tags": ["ratings"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "ratingId",
+            "in": "path",
+            "description": "ID de la valoración",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 100
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Valoración modificada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para modificar esta valoración",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película o valoración no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Datos de valoración inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar valoración",
+        "description": "Elimina una valoración existente. Solo el autor puede eliminarla.",
+        "operationId": "deleteMovieRating",
+        "tags": ["ratings"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "path",
+            "description": "ID de la película",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "ratingId",
+            "in": "path",
+            "description": "ID de la valoración",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 100
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Valoración eliminada"
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para eliminar esta valoración",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Película o valoración no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/watchlist/{userId}": {
+      "get": {
+        "summary": "Obtener watchlist",
+        "description": "Obtiene el watchlist de un usuario con paginación",
+        "operationId": "getUserWatchlist",
+        "tags": ["watchlist"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID del usuario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página para paginación",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de resultados por página",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de películas en el watchlist del usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para ver este watchlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/watchlist/{userId}/items": {
+      "post": {
+        "summary": "Añadir a watchlist",
+        "description": "Añade una película al watchlist de un usuario",
+        "operationId": "addToWatchlist",
+        "tags": ["watchlist"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID del usuario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Película añadida al watchlist",
+            "headers": {
+              "Location": {
+                "description": "URL del recurso creado",
+                "schema": {
+                  "type": "string",
+                  "example": "/watchlist/1/items/50"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para modificar este watchlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario o película no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La película ya existe en el watchlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ID de película inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/watchlist/{userId}/items/{itemId}": {
+      "patch": {
+        "summary": "Actualizar elemento del watchlist",
+        "description": "Actualiza un elemento del watchlist (ej. marcar como visto)",
+        "operationId": "updateWatchlistItem",
+        "tags": ["watchlist"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID del usuario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "description": "ID del elemento en el watchlist",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 50
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Elemento actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para modificar este watchlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario o elemento no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar de watchlist",
+        "description": "Elimina una película del watchlist de un usuario",
+        "operationId": "removeFromWatchlist",
+        "tags": ["watchlist"],
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID del usuario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "description": "ID del elemento en el watchlist",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 50
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Película eliminada del watchlist"
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No tienes permiso para modificar este watchlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario o elemento no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Movie": {
+        "type": "object",
+        "required": ["id", "title", "genre", "duration"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Inception"
+          },
+          "genre": {
+            "type": "string",
+            "example": "Sci-Fi"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duración en minutos",
+            "example": 148
+          },
+          "rating": {
+            "type": "number",
+            "format": "float",
+            "readOnly": true,
+            "description": "Valoración media de la película",
+            "minimum": 0,
+            "maximum": 5,
+            "example": 4.5
+          }
+        }
+      },
+      "MovieListResponse": {
+        "type": "object",
+        "required": ["data", "pagination"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Movie"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "WatchlistItemInput": {
+        "type": "object",
+        "required": ["movieId"],
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "ID válido de una película existente",
+            "example": 1
+          },
+          "watched": {
+            "type": "boolean",
+            "default": false,
+            "description": "Indica si la película ya ha sido vista",
+            "example": false
+          }
+        }
+      },
+      "WatchlistItemUpdate": {
+        "type": "object",
+        "required": ["watched"],
+        "properties": {
+          "watched": {
+            "type": "boolean",
+            "description": "Indica si la película ya ha sido vista",
+            "example": true
+          }
+        }
+      },
+      "WatchlistItem": {
+        "type": "object",
+        "required": ["id", "movieId", "title", "watched", "createdAt"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true,
+            "description": "ID único del elemento en el watchlist",
+            "example": 50
+          },
+          "movieId": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 1,
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "readOnly": true,
+            "example": "Inception"
+          },
+          "watched": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha de creación del elemento",
+            "example": "2024-01-15T10:30:00Z"
+          }
+        }
+      },
+      "WatchlistResponse": {
+        "type": "object",
+        "required": ["data", "pagination"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchlistItem"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "RatingInput": {
+        "type": "object",
+        "required": ["rating"],
+        "properties": {
+          "rating": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Valoración entre 0 y 5 estrellas",
+            "example": 4.5
+          },
+          "comment": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Comentario opcional sobre la película",
+            "example": "Una película increíble con efectos visuales impresionantes"
+          }
+        }
+      },
+      "Rating": {
+        "type": "object",
+        "required": ["id", "movieId", "userId", "rating", "createdAt"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 100
+          },
+          "movieId": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 1
+          },
+          "userId": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 1
+          },
+          "rating": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 5,
+            "example": 4.5
+          },
+          "comment": {
+            "type": "string",
+            "maxLength": 500,
+            "example": "Una película increíble con efectos visuales impresionantes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Fecha de creación de la valoración",
+            "example": "2024-01-15T10:30:00Z"
+          }
+        }
+      },
+      "RatingListResponse": {
+        "type": "object",
+        "required": ["data", "pagination"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rating"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": ["page", "limit", "total", "totalPages"],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Página actual",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Elementos por página",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total de elementos",
+            "example": 150
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "Total de páginas",
+            "example": 8
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensaje descriptivo del error",
+            "example": "Recurso no encontrado"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key para autenticación. Incluir en el header x-api-key"
+      }
+    }
+  }
+}
+
