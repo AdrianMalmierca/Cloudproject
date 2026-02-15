@@ -1,5 +1,4 @@
-## General description
-
+# Cloud Project
 This project deploys the REST MIMO Movies API in the cloud using a scalable architecture, automated through:
 - Docker
 - Infrastructure as Code
