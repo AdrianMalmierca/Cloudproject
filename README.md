@@ -160,12 +160,17 @@ Creates:
 
 - Excellent modular practice.
 
-# Ejecución
-Desde MIMO Movies/:
+## Installation
+1. Clone the repository
+git clone https://github.com/AdrianMalmierca/proyectoCloud
+
+From MIMO Movies/:
+2. Builds a Docker image named mimo-movies from the current directory (.).
 ``` bash 
 docker build -t mimo-movies .
 ```
 
+Runs the mimo-movies container, exposing port 3000 to access the app locally.
 ``` bash
 docker run -p 3000:3000 mimo-movies
 ```
@@ -174,6 +179,7 @@ Try in the browser: http://localhost:3000/movies
 
 From root (proyectoCloud):
 
+3. Starts a container with AWS credentials and the current workspace mounted, for executing Packer or Terraform commands interactively.
 ```bash
 docker run -it --rm \
   -v ~/.aws:/root/.aws \
@@ -183,21 +189,21 @@ docker run -it --rm \
   bash
 ```
 
-## Ejecución de packer
+## Packer execution
 Before running the Packer commands, ensure you have initialized the Packer configuration. This step downloads the necessary plugins.
 
 ```bash
 packer init .
 ```
 
-### Packer Formatting
+### Packer formatting
 Format your template. Packer will print out the names of the files it modified, if any. In this case, your template file was already formatted correctly, so Packer won't return any file names.
 
 ```bash
 packer fmt .
 ```
 
-### Packer Validation
+### Packer validation
 Validate your template. If Packer detects any invalid configuration, Packer will print out the file name, the error type and line number of the invalid configuration. The example configuration provided above is valid, so Packer will return nothing.
 
 ```bash
@@ -212,12 +218,12 @@ Build the image with the packer build command. Packer will print output similar 
 packer build .
 ```
 
-## Ejecución de terraform
+## Terraform execution
 ```bash
 cd /workspace/aws/terraform
 ```
 
-### Terraform Initialization
+### Terraform initialization
 Before running the Terraform commands, ensure you have initialized the Terraform configuration. This step downloads the necessary provider plugins.
 ```bash
 terraform init
