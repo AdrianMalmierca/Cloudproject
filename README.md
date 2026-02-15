@@ -288,3 +288,7 @@ cd aws/terraform
 ```bash
 terraform destroy
 ```
+
+## Author
+Adrián Martín Malmierca
+Computer Engineer & Mobile Applications Master's Student
