@@ -422,7 +422,7 @@ Creates:
 
 ## Installation
 1. Clone the repository
-git clone https://github.com/AdrianMalmierca/proyectoCloud
+git clone https://github.com/AdrianMalmierca/Cloudproject
 
 From MIMO Movies/:
 2. Builds a Docker image named mimo-movies from the current directory (.).
@@ -437,7 +437,7 @@ docker run -p 3000:3000 mimo-movies
 
 Try in the browser: http://localhost:3000/movies
 
-From root (proyectoCloud):
+From root (Cloudproject):
 
 3. Starts a container with AWS credentials and the current workspace mounted, for executing Packer or Terraform commands interactively.
 ```bash
