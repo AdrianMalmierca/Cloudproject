@@ -4,6 +4,8 @@ This project deploys the REST MIMO Movies API in the cloud using a scalable arch
 - Infrastructure as Code
 - AMIs creation
 
+It transforms a local API into a fully automated, scalable, cloud-native deployment on AWS.
+
 The infrastructure includes:
 - Custom VPC
 - Public and private subnets
@@ -41,7 +43,247 @@ proyectoCloud/
 │
 └── README.md
 
+## MIMO Movies API(Express + TypeScript)
+A RESTful API for managing movies, ratings, and personalized watchlists.
+Built with **TypeScript**, **Express**, **Sequelize**, and **SQLite**, following a layered architecture and clean separation of concerns.
+
+### MIMO Movies API provides:
+1. A paginated movie catalog
+2. Average rating calculation per movie
+3. User-based rating system (one rating per user per movie)
+4. Authenticated watchlist management
+5. API key–based authentication
+6. Request validation and structured error handling
+
+It simulates a production-ready backend for a movie platform where users can rate movies and maintain personal watchlists.
+
+### Problem it solves
+Modern applications (web or mobile) often require:
+- A movie catalog with aggregated metrics (e.g., average ratings)
+- User-specific actions (ratings, watchlists)
+- Controlled access to private resources
+- Pagination for scalable data retrieval
+
+This project solves those requirements by:
+- Providing structured relational data models
+- Enforcing business rules at controller and model level
+- Implementing API key authentication
+- Returning paginated responses with metadata
+- Computing aggregated ratings directly at database level
+
+### Architecture and design
+
+```
+src/
+ ├── app.ts
+ ├── config/
+ ├── db.ts
+ ├── models/
+ ├── controllers/
+ ├── routes/
+ ├── middlewares/
+ ├── schemas/
+ └── utils/
+scripts/
+ ├── seed.ts
+ └── reset.ts
+```
+
+#### Routing layer
+Defines HTTP endpoints using Express routers:
+- `/movies`
+- `/movies/:movieId/ratings`
+- `/watchlist/:userId`
+
+#### Controllers
+Contain application logic:
+- Validate route parameters
+- Apply business rules
+- Handle authorization checks
+- Format JSON responses
+- Set correct HTTP status codes
+
+For example:
+- A user cannot rate the same movie twice
+- A user can only modify their own ratings
+- A user can only access their own watchlist
+
+#### Models
+Implemented using **Sequelize ORM**.
+
+Responsibilities:
+1. Query abstraction
+2. Pagination handling
+3. Aggregation (AVG rating calculation)
+4. Association management
+
+Notable feature:
+
+##### Average rating calculation
+Movies are retrieved with:
+```ts
+Sequelize.fn("AVG", Sequelize.col("ratings.rating"))
+```
+
+This ensures average ratings are computed at database level (efficient and scalable).
+
+#### Middleware layer
+
+#####  `verifyToken`
+- Reads `x-api-key` header
+- Validates user existence
+- Attaches `userId` to request
+
+##### `validatePayload`
+- Uses Joi for request body validation
+- Returns `422 Unprocessable Entity` on invalid input
+
+##### `respondTo`
+- Enforces `application/json` responses
+- Returns `406 Not Acceptable` otherwise
+
+##### Error handling
+- Centralized 500 handler
+- 404 fallback handler
+
+#### Authentication strategy
+The API uses **API Key authentication**:
+- Users have a unique `apiKey`
+- The client must send:
+```
+x-api-key: YOUR_API_KEY
+```
+
+Protected endpoints:
+- Create / Update / Delete ratings
+- All watchlist endpoints
+
+Public endpoints:
+- GET movies
+- GET ratings
+
+### Technologies Used
+
+#### TypeScript
+- Static typing
+- Better maintainability
+- Safer refactoring
+
+#### Express
+- Minimal and flexible HTTP framework
+- Middleware-based architecture
+
+#### Sequelize
+- ORM abstraction
+- Associations
+- Aggregations
+- Pagination support
+
+#### SQLite
+- Lightweight file-based database
+- Ideal for local development and testing
+
+#### Joi
+- Declarative schema validation
+- Clean error reporting
+
+### Database Design
+
+#### Tables
+- `users`
+- `movies`
+- `ratings`
+- `watchlist_items`
+
+#### Relationships
+- User → has many Ratings
+- User → has many WatchlistItems
+- Movie → has many Ratings
+- Movie → has many WatchlistItems
+
+#### Constraints
+- Unique rating per user per movie
+- Unique watchlist item per user per movie
+
+### Pagination
+Supported via query parameters:
+```
+?page=1&limit=10
+```
+
+Response format:
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "totalPages": 3
+  }
+}
+```
+
+### Database seeding
+The project includes scripts to:
+- Reset database
+- Populate test data
+
+#### Reset database
+- Deletes SQLite file
+- Recreates schema
+
+If you want to run alone:
+```bash
+npm run db:reset
+```
+
+#### Seed database
+Creates:
+- 3 users
+- 25 movies
+- 10 ratings
+- 9 watchlist items
+
+It also prints test API keys in the console.
+
+If you want to run alone:
+```bash
+npm run db:seed
+```
+
+### API endpoints
+
+#### Movies
+| Method | Endpoint           | Authentication | Description                                       |
+| ------ | ------------------ | -------------- | ------------------------------------------------- |
+| GET    | `/movies`          |   No           | Paginated list of movies including average rating |
+| GET    | `/movies/:movieId` |   No           | Retrieve a single movie with its average rating   |
+
+#### Ratings
+| Method | Endpoint                             | Authentication     | Description                                      |
+| ------ | ------------------------------------ | ------------------ | ------------------------------------------------ |
+| GET    | `/movies/:movieId/ratings`           |   No               | Get all ratings for a specific movie (paginated) |
+| POST   | `/movies/:movieId/ratings`           |   API Key required | Create a rating for a movie (one per user)       |
+| PATCH  | `/movies/:movieId/ratings/:ratingId` |   API Key required | Update a user’s own rating                       |
+| DELETE | `/movies/:movieId/ratings/:ratingId` |   API Key required | Delete a user’s own rating                       |
+
+
+#### Watchlist
+| Method | Endpoint                           | Authentication     | Description                               |
+| ------ | ---------------------------------- | ------------------ | ----------------------------------------- |
+| GET    | `/watchlist/:userId`               |   API Key required | Get paginated watchlist for a user        |
+| POST   | `/watchlist/:userId/items`         |   API Key required | Add a movie to the user’s watchlist       |
+| PATCH  | `/watchlist/:userId/items/:itemId` |   API Key required | Update watched status of a watchlist item |
+| DELETE | `/watchlist/:userId/items/:itemId` |   API Key required | Remove a movie from the watchlist         |
+
 ## Docker
+
+### Why?
+1. Encapsulates the application
+2. Guarantees consistency across environments
+3. Simplifies deployment inside EC2
+
 Dockerfile:
 - Starts on Ubuntu 24.04
 - Install:
@@ -61,10 +303,12 @@ Packer creates a custom AMI in AWS that:
    - Builds the Docker image
    - Leaves the instance ready to run the app
 
-Workflow:
-   Ubuntu base → Instalar Docker → Copiar código → docker build → Crear AMI
-
 Result: An AMI ready to production
+
+### Problem it solves:
+1. Avoids slow bootstrapping
+2. Avoids runtime installation scripts
+3. Ensures immutable infrastructure
 
 ## Terraform:
 - Terraform defines the entire infrastructure on AWS.
@@ -92,11 +336,19 @@ Result: An AMI ready to production
    ├── variables.tf
    └── outputs.tf
 
+### Problem it solves:
+1. Manual AWS configuration
+2. Error-prone console setup
+3. Non-versioned infrastructure
+4. Lack of reproducibility
 
-### Módulos de Terraform
+
+### Terraform modules
 Each module encapsulates a specific AWS resource.
 
 #### vpc/
+Isolates infrastructure in a private network.
+
 Creates:
 - Custom VPC
 - Enabled DNS hostnames
@@ -110,6 +362,10 @@ Creates:
 - Used for:
    - Public subnets (EC2, ALB)
    - Private subnets (RDS)
+
+- Solves:
+   - Security best practices
+   - Database isolation
 
 #### internet_gateway/
 - Enables the VPC to have internet access.
@@ -143,6 +399,8 @@ Creates:
    - Network configuration
 
 #### rds/
+Managed database service
+
 Creates:
 - DB Subnet Group
 - RDS MySQL 8.0
@@ -150,6 +408,8 @@ Creates:
 - Databases in private subnets.
 
 #### s3/
+Object storage
+
 Creates:
 - Bucket
 - ​​Optional versioning
@@ -157,8 +417,8 @@ Creates:
 
 #### security_group_rule/
 - Allows creating security group rules as a reusable module.
-
 - Excellent modular practice.
+- Act as virtual firewalls.
 
 ## Installation
 1. Clone the repository
@@ -293,6 +553,43 @@ cd aws/terraform
 ```bash
 terraform destroy
 ```
+
+## Key backend concepts demonstrated
+- RESTful API design
+- Layered architecture
+- Authentication middleware
+- Database aggregation queries
+- Pagination patterns
+- Validation with Joi
+- Error handling best practices
+- Business rule enforcement
+- Separation of concerns
+
+## Key cloud and infrastructure concepts demonstrated
+- Infrastructure as Code (IaC) using Terraform
+- Immutable infrastructure with Packer
+- Custom AMI creation on Amazon Web Services
+- Containerized deployment with Docker
+- Virtual Private Cloud (VPC) network design
+- Public and private subnet segmentation
+- Internet Gateway and route table configuration
+- Security Groups with granular ingress/egress rules
+- Application Load Balancer (ALB) architecture
+- Target Groups and health checks configuration
+- Auto Scaling Group (ASG) with Launch Templates
+- Bootstrapping instances via user_data
+- Managed relational database provisioning with Amazon RDS (MySQL 8)
+- Private database access restricted by security groups
+- S3 bucket provisioning with versioning and server-side encryption
+- Key pair generation and SSH access management
+- Modular Terraform architecture (reusable modules)
+- Sensitive variable handling via environment variables (TF_VAR_*)
+- Multi-AZ subnet distribution for high availability
+- Separation of application layer and infrastructure layer
+- Declarative resource provisioning and state management
+
+## What did I learn?
+This project has helped me learn how to create an API from scratch. I've also learned how to do it using Packer and Terraform. Although the cloud part is quite complex and not something a junior programmer can easily do, little by little I've come to understand what each part does, and how each part individually forms the whole.
 
 ## Author
 Adrián Martín Malmierca 
