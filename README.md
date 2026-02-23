@@ -312,7 +312,9 @@ Result: An AMI ready to production
 
 ## Terraform:
 - Terraform defines the entire infrastructure on AWS.
-- Modular structure:
+
+```
+Modular structure:
    terraform/
    ├── modules/
    │   ├── vpc/
@@ -335,6 +337,7 @@ Result: An AMI ready to production
    ├── provider.tf
    ├── variables.tf
    └── outputs.tf
+```
 
 ### Problem it solves:
 1. Manual AWS configuration
