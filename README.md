@@ -19,6 +19,7 @@ The infrastructure includes:
 - Custom AMI created with Packer
 
 ## General architecture
+```
 Internet
    │
    ▼
@@ -29,7 +30,8 @@ EC2 (Docker container - MIMO Movies)
    │
    ▼
 RDS MySQL (private subnets)
-
+```
+```
 proyectoCloud/
 │
 ├── MIMO Movies/
@@ -42,6 +44,7 @@ proyectoCloud/
 │   └── terraform/
 │
 └── README.md
+````
 
 ## MIMO Movies API(Express + TypeScript)
 A RESTful API for managing movies, ratings, and personalized watchlists.
