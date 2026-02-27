@@ -22,7 +22,6 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar solo lo necesario
 COPY package*.json ./
 RUN npm install --production
 
