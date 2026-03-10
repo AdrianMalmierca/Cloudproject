@@ -197,7 +197,9 @@ Creates:
 
 ## Installation
 1. Clone the repository
+```bash
 git clone https://github.com/AdrianMalmierca/Cloudproject
+```
 
 From MIMO Movies/:
 2. Builds a Docker image named mimo-movies from the current directory (.).
@@ -205,16 +207,21 @@ From MIMO Movies/:
 docker build -t mimo-movies .
 ```
 
-Runs the mimo-movies container, exposing port 3000 to access the app locally.
+3. Runs the mimo-movies container, exposing port 3000 to access the app locally.
 ``` bash
 docker run -p 3000:3000 mimo-movies
 ```
 
-Try in the browser: http://localhost:3000/movies
+Try in the browser: http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
 
 From root (Cloudproject):
 
-3. Starts a container with AWS credentials and the current workspace mounted, for executing Packer or Terraform commands interactively.
+4. Build the image for packer and terraform
+```bash
+docker build -t terraform-packer-awscli -f docker/Dockerfile .
+```
+
+5. Starts a container with AWS credentials and the current workspace mounted, for executing Packer or Terraform commands interactively.
 ```bash
 docker run -it --rm \
   -v ~/.aws:/root/.aws \
@@ -223,49 +230,60 @@ docker run -it --rm \
   terraform-packer-awscli \
   bash
 ```
+6. You need to put your credentials of aws: Your user id, your password, the region and the format. You need to be able to create everything on your account.
+```bash
+aws configure
+```
 
 ## Packer execution
-Before running the Packer commands, ensure you have initialized the Packer configuration. This step downloads the necessary plugins.
+7. Before running the Packer commands, ensure you have initialized the Packer configuration. This step downloads the necessary plugins.
 
 ```bash
 packer init .
 ```
 
 ### Packer formatting
-Format your template. Packer will print out the names of the files it modified, if any. In this case, your template file was already formatted correctly, so Packer won't return any file names.
+8. Format your template. Packer will print out the names of the files it modified, if any. In this case, your template file was already formatted correctly, so Packer won't return any file names.
 
 ```bash
 packer fmt .
 ```
 
 ### Packer validation
-Validate your template. If Packer detects any invalid configuration, Packer will print out the file name, the error type and line number of the invalid configuration. The example configuration provided above is valid, so Packer will return nothing.
+9. Validate your template. If Packer detects any invalid configuration, Packer will print out the file name, the error type and line number of the invalid configuration. The example configuration provided above is valid, so Packer will return nothing.
 
 ```bash
 packer validate .
 ```
 
 ### Building the AMI
-Build the image with the packer build command. Packer will print output similar to what is shown below.
-
-### Using default variable values
+10. Build the image with the packer build command. Packer will print output similar to what is shown below.
 ```bash
 packer build .
 ```
 
+When packer is finished you will see:
+![Packer finished](assets/packer%20finished.png)
+
+You need the ami created for the next step on terraform, so you should keep it.
+
+In AWS you can see the snapshot asociated to the AMI created by packer, going on EC2 -> snapshot.
+![Snapshot](assets/ami.png)
+
 ## Terraform execution
+11. Now go to terraforms directory.
 ```bash
 cd /workspace/aws/terraform
 ```
 
 ### Terraform initialization
-Before running the Terraform commands, ensure you have initialized the Terraform configuration. This step downloads the necessary provider plugins.
+12. Before running the Terraform commands, ensure you have initialized the Terraform configuration. This step downloads the necessary provider plugins.
 ```bash
 terraform init
 ```
 
 ### TF_VAR_ami_id
-Assigns the ID of the custom AMI (created by Packer) to the Terraform variable ami_id.
+13. Assigns the ID of the custom AMI (created by Packer) to the Terraform variable ami_id.
 Terraform uses this AMI when launching EC2 instances or Auto Scaling Groups (ASG).
 
 ```bash
@@ -273,7 +291,7 @@ export TF_VAR_ami_id=ami-x
 ```
 
 ### TF_VAR_rds_password
-Assigns the admin password for the RDS MySQL database to the Terraform variable rds_password.
+14. Assigns the admin password for the RDS MySQL database to the Terraform variable rds_password.
 This avoids hardcoding sensitive credentials in your code.
 
 ```bash
@@ -281,17 +299,16 @@ export TF_VAR_rds_password="PasswordSegura123!"
 ```
 
 ### Terraform Plan
-To see what changes Terraform will make to your AWS environment, run the following command. This generates an execution plan without making any changes.
+15. To see what changes Terraform will make to your AWS environment, run the following command. This generates an execution plan without making any changes.
 
 > You can use the `-out` option to save the plan to a file for later execution:
 
 ```bash
-export TF_VAR_rds_password="tu_password_segura"
 terraform plan -out=tfplan
 ```
 
-###Terraform Apply
-To apply the changes defined in your Terraform configuration, run the following command. This will create the networking resources in your AWS account.
+### Terraform Apply
+14. To apply the changes defined in your Terraform configuration, run the following command. This will create the networking resources in your AWS account.
 
 > After running this command, Terraform will prompt you to confirm the changes. Type `yes` to proceed.
 
@@ -311,6 +328,21 @@ For example, it can show:
 terraform output
 ```
 
+When terraform is finished you'll something like:
+![Terraform finished](assets/terraform%20finished.png)
+
+If you want to access to the API, you need the alb_dns_name, so you replace the localhost:3000 for "example-alb-1756634364.eu-west-1.elb.amazonaws.com". For example:
+
+Before: http://localhost:3000/movies
+
+Now: http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
+
+On AWS you can see the nets in the VPC dahsborad:
+![Nets](assets/redes.png)
+
+And subnets:
+![Subnets](assets/subredes.png)
+
 ## SSH conection to EC2 Instance
 To connect to the EC2 instance created by Terraform, you need to use SSH. A key pair is generated during the Terraform apply process, and you can use it to connect to the instance.
 
@@ -328,6 +360,101 @@ cd aws/terraform
 ```bash
 terraform destroy
 ```
+
+## Execution:
+### GET all movies
+You obtain the movie list.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
+```
+![GET movies](assets/GET%20movies.png)
+
+### GET movie by id
+You obtain the movie id you put on the url, in case it exist.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1
+```
+![GET movie by id](assets/GET%20movie%20by%20id.png)
+
+### GET ratings by movie id
+You obtain all the ratings of the movie id you put on the url, in case it exist.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1/ratings
+```
+![GET rating by movie id](assets/GET%20ratings.png)
+
+### GET rating by id by movie id
+You obtain the rating of the movie id and the rating id you put on the url, in case it exist.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1/ratings/4
+```
+![GET rating by id by movie id](assets/GET%20rating%20by%20id.png)
+
+### ADD rating by movie id
+You add the rating putting all the attributes in the body. You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings
+```
+![ADD rating](assets/ADD%20rating.png)
+
+You need to put the rating and the comment in the body:
+![ADD rating](assets/body%20add%20rating.png)
+
+### UPDATE rating by movie id and rating id
+You update the rating putting the id in the url and changing the comment and/or the rating. You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings
+```
+![UPDATE rating](assets/Update%20rating.png)
+
+You don't need to put the rating or the comment to update:
+![UPDATE rating](assets/body%20update%20rating.png)
+
+### DELETE rating by movie id and rating id
+You delete the rating putting the id in the url. You need authorization.
+```bash
+curl http:/example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings/11
+```
+![DELETE rating](assets/Delete%20rating.png)
+
+### GET watchlist by user id
+You get all the watchlist of the user you put the id in th url. You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1
+```
+![GET watchlist](assets/GET%20watchlist.png)
+
+### ADD watchlist by user id
+You create a watchlist for the user put the id in the url. You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items
+```
+![ADD watchlist](assets/ADD%20watchlist.png)
+
+You need to put the id of the movie of which you can add the watchlist:
+![ADD watchlist](assets/body%20add%20watchlist.png)
+
+### UPDATE watchlist by user id and watchlist id
+You update the watchlist of the user you put the id in the url with the id of the watchlist. You only update the attribute "watched". You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items/10
+```
+![UPDATE watchlist](assets/Update%20watchlist.png)
+
+You need to put the attribute wacthed, changing the value:
+![UPDATE watchlist](assets/body%20update%20watchlist.png)
+
+### DELETE watchlist by user id and watchlist id
+You delete a watchlist of the user put the id in the url. You need authorization.
+```bash
+curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items/10
+```
+![DELETE watchlist](assets/Delete%20watchlist.png)
+
+### Bad authorization
+For example, if you don't put the api key as a header or is wrong, you won't be able to do the method.
+![GET movies](assets/bad%20auth.png)
+
 
 ## Key backend concepts demonstrated
 - RESTful API design
