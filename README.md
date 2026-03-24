@@ -10,12 +10,6 @@ A cloud-native deployment pipeline that transforms a local REST API into a fully
 
 ---
 
-## Live Demo
-
-🔗 [http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies](http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies)
-
----
-
 ## Problem Statement
 
 Deploying a local API to a production-grade cloud environment typically involves manual console configuration, fragile bootstrapping scripts, and non-reproducible setups. This project solves that by:
