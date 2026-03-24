@@ -1,24 +1,33 @@
-# Cloud Project
-This project deploys the REST MIMO Movies API in the cloud using a scalable architecture, automated through:
-- Docker
-- Infrastructure as Code
-- AMIs creation
+# Cloud Project — AWS Infrastructure as Code with Docker, Packer & Terraform
 
-It transforms a local API into a fully automated, scalable, cloud-native deployment on AWS.
+![Docker](https://img.shields.io/badge/Docker-24-2496ED?style=flat-square&logo=docker)
+![Terraform](https://img.shields.io/badge/Terraform-1.x-7B42BC?style=flat-square&logo=terraform)
+![Packer](https://img.shields.io/badge/Packer-1.x-02A8EF?style=flat-square&logo=hashicorp)
+![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20RDS%20%7C%20ALB%20%7C%20ASG-FF9900?style=flat-square&logo=amazonaws)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)
 
-The infrastructure includes:
-- Custom VPC
-- Public and private subnets
-- Internet Gateway
-- Application Load Balancer (ALB)
-- Auto Scaling Group (ASG)
-- EC2
-- RDS MySQL
-- S3
-- Security Groups configured per module
-- Custom AMI created with Packer
+A cloud-native deployment pipeline that transforms a local REST API into a fully automated, scalable AWS infrastructure — provisioned entirely through Infrastructure as Code using Terraform, Packer, and Docker.
 
-## General architecture
+---
+
+## Live Demo
+
+🔗 [http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies](http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies)
+
+---
+
+## Problem Statement
+
+Deploying a local API to a production-grade cloud environment typically involves manual console configuration, fragile bootstrapping scripts, and non-reproducible setups. This project solves that by:
+
+- Automating the entire infrastructure lifecycle with Terraform modules
+- Creating immutable, pre-baked AMIs with Packer to avoid runtime installs
+- Containerizing the application with Docker for environment consistency
+- Enforcing network security through VPC segmentation and Security Groups
+
+---
+
+## Architecture
 ```
 Internet
    │
@@ -31,469 +40,308 @@ EC2 (Docker container - MIMO Movies)
    ▼
 RDS MySQL (private subnets)
 ```
+
+---
+
+## Screenshots
+
+### Packer — AMI Creation
+Custom AMI built and registered in AWS after a successful Packer build.
+
+![Packer finished](assets/packer%20finished.png)
+
+![Snapshot](assets/ami.png)
+
+### Terraform — Infrastructure Output
+Full infrastructure provisioned: VPC, subnets, ALB, ASG, RDS, and S3.
+
+![Terraform finished](assets/terraform%20finished.png)
+
+### Networking
+VPC dashboard showing configured networks and subnets.
+
+![Nets](assets/redes.png)
+
+![Subnets](assets/subredes.png)
+
+### API — Endpoints in Action
+
+![GET movies](assets/GET%20movies.png)
+
+![GET movie by id](assets/GET%20movie%20by%20id.png)
+
+![GET ratings](assets/GET%20ratings.png)
+
+---
+
+## Features
+
+### Docker
+- Encapsulates the application for environment consistency
+- Dockerfile based on Ubuntu 24.04
+- Installs AWS CLI, Terraform, Packer, Python, and Git
+- Acts as a portable DevOps machine — not just an app container
+
+### Packer
+- Creates a custom AMI pre-loaded with Docker and the app image
+- Avoids slow bootstrapping and runtime installation scripts
+- Guarantees immutable, production-ready infrastructure from day one
+
+### Terraform
+- Defines the entire AWS infrastructure declaratively
+- Fully modular architecture — each AWS resource is an independent, reusable module
+- Sensitive variables handled via environment variables (`TF_VAR_*`)
+- State-managed and reproducible across environments
+
+### MIMO Movies API
+- RESTful Express + TypeScript API with full CRUD operations
+- JWT-based authentication middleware
+- Endpoints: movies, ratings, and watchlists
+- Layered architecture with validation (Joi), pagination, and error handling
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Reason |
+|-------|-----------|--------|
+| Containerization | Docker | Environment consistency, simplified EC2 deployment |
+| AMI Creation | Packer | Immutable infrastructure, no runtime bootstrapping |
+| Infrastructure | Terraform | IaC, modular, versioned, reproducible |
+| Cloud Provider | AWS (EC2, RDS, ALB, ASG, S3, VPC) | Industry-standard scalable cloud platform |
+| API Framework | Express + TypeScript | Type-safe REST API with layered architecture |
+| Database | RDS MySQL 8.0 | Managed relational DB in private subnets |
+| Load Balancing | Application Load Balancer | Traffic distribution and health checks |
+| Scaling | Auto Scaling Group | Automatic scaling between 1–2 instances |
+
+---
+
+## Project Structure
 ```
 proyectoCloud/
 │
-├── MIMO Movies/
+├── MIMO Movies/              # Express + TypeScript REST API
 │
 ├── docker/
-│   └── Dockerfile
+│   └── Dockerfile            # DevOps environment image
 │
 ├── aws/
-│   ├── packer/
+│   ├── packer/               # AMI build configuration
 │   └── terraform/
+│       ├── modules/
+│       │   ├── vpc/
+│       │   ├── subnet/
+│       │   ├── internet_gateway/
+│       │   ├── route/
+│       │   ├── alb/
+│       │   ├── asg/
+│       │   ├── ec2_instance/
+│       │   ├── rds/
+│       │   ├── s3/
+│       │   └── security_group_rule/
+│       ├── network.tf
+│       ├── ec2.tf
+│       ├── alb.tf
+│       ├── asg.tf
+│       ├── rds.tf
+│       ├── s3.tf
+│       ├── provider.tf
+│       ├── variables.tf
+│       └── outputs.tf
 │
 └── README.md
 ```
 
-## MIMO Movies API(Express + TypeScript)
-This project is an extension of my other project Api with testing in [**Github**](https://github.com/AdrianMalmierca/Api-with-testing)
+---
 
-## Docker
-
-### Why?
-1. Encapsulates the application
-2. Guarantees consistency across environments
-3. Simplifies deployment inside EC2
-
-Dockerfile:
-- Starts on Ubuntu 24.04
-- Install:
-   - AWS CLI
-   - Terraform
-   - Packer
-   - Python
-   - Git
-- Configure a complete DevOps environment
-- Runs bash by default
-- This container is a portable DevOps machine, not just for the API.
-
-## Packer
-Packer creates a custom AMI in AWS that:
-   - Installs Docker
-   - Copies the MIMO Movies project
-   - Builds the Docker image
-   - Leaves the instance ready to run the app
-
-Result: An AMI ready to production
-
-### Problem it solves:
-1. Avoids slow bootstrapping
-2. Avoids runtime installation scripts
-3. Ensures immutable infrastructure
-
-## Terraform:
-- Terraform defines the entire infrastructure on AWS.
-
-```
-Modular structure:
-   terraform/
-   ├── modules/
-   │   ├── vpc/
-   │   ├── subnet/
-   │   ├── internet_gateway/
-   │   ├── route/
-   │   ├── alb/
-   │   ├── asg/
-   │   ├── ec2_instance/
-   │   ├── rds/
-   │   ├── s3/
-   │   └── security_group_rule/
-   │
-   ├── network.tf
-   ├── ec2.tf
-   ├── alb.tf
-   ├── asg.tf
-   ├── rds.tf
-   ├── s3.tf
-   ├── provider.tf
-   ├── variables.tf
-   └── outputs.tf
-```
-
-### Problem it solves:
-1. Manual AWS configuration
-2. Error-prone console setup
-3. Non-versioned infrastructure
-4. Lack of reproducibility
-
-
-### Terraform modules
-Each module encapsulates a specific AWS resource.
-
-#### vpc/
-Isolates infrastructure in a private network.
-
-Creates:
-- Custom VPC
-- Enabled DNS hostnames
-- Output:
-- vpc_id
-- Default route table
-- Default security group
-
-#### subnet/
-- Dynamically creates multiple subnets using for_each.
-- Used for:
-   - Public subnets (EC2, ALB)
-   - Private subnets (RDS)
-
-- Solves:
-   - Security best practices
-   - Database isolation
-
-#### internet_gateway/
-- Enables the VPC to have internet access.
-
-#### route/
-- Creates routes in a route table.
-
-Example:
-- 0.0.0.0/0 → Internet Gateway
-
-#### alb/
-Creates:
-- Application Load Balancer
-- Target Group
-- HTTP Listener (port 80)
-- Health check in /movies
-- Distributes traffic to EC2.
-
-#### asg/
-Creates:
-- Launch Template
-- Auto Scaling Group
-- Connects to the ALB Target Group
-- Allows automatic scaling between 1 and 2 instances.
-
-#### ec2_instance/
-- Creates EC2 instances directly (without ASG).
-- Includes:
-   - user_data
-   - SSH key
-   - Network configuration
-
-#### rds/
-Managed database service
-
-Creates:
-- DB Subnet Group
-- RDS MySQL 8.0
-- Private Security Group
-- Databases in private subnets.
-
-#### s3/
-Object storage
-
-Creates:
-- Bucket
-- ​​Optional versioning
-- AES256 encryption
-
-#### security_group_rule/
-- Allows creating security group rules as a reusable module.
-- Excellent modular practice.
-- Act as virtual firewalls.
-
-## Installation
-1. Clone the repository
+## Running Locally
 ```bash
+# Clone the repository
 git clone https://github.com/AdrianMalmierca/Cloudproject
 ```
-
-From MIMO Movies/:
-2. Builds a Docker image named mimo-movies from the current directory (.).
-``` bash 
+```bash
+# Build and run the API container
+cd MIMO\ Movies/
 docker build -t mimo-movies .
-```
-
-3. Runs the mimo-movies container, exposing port 3000 to access the app locally.
-``` bash
 docker run -p 3000:3000 mimo-movies
 ```
-
-Try in the browser: http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
-
-From root (Cloudproject):
-
-4. Build the image for packer and terraform
 ```bash
+# Build the DevOps image (Terraform + Packer + AWS CLI)
+cd ..
 docker build -t terraform-packer-awscli -f docker/Dockerfile .
-```
 
-5. Starts a container with AWS credentials and the current workspace mounted, for executing Packer or Terraform commands interactively.
-```bash
+# Start interactive container with AWS credentials mounted
 docker run -it --rm \
   -v ~/.aws:/root/.aws \
   -v $(pwd):/workspace \
   -w /workspace/aws/packer \
   terraform-packer-awscli \
   bash
-```
-6. You need to put your credentials of aws: Your user id, your password, the region and the format. You need to be able to create everything on your account.
-```bash
+
+# Configure AWS credentials
 aws configure
 ```
 
-## Packer execution
-7. Before running the Packer commands, ensure you have initialized the Packer configuration. This step downloads the necessary plugins.
+---
 
+## Packer Execution
 ```bash
+# Initialize, format, validate, and build the AMI
 packer init .
-```
-
-### Packer formatting
-8. Format your template. Packer will print out the names of the files it modified, if any. In this case, your template file was already formatted correctly, so Packer won't return any file names.
-
-```bash
 packer fmt .
-```
-
-### Packer validation
-9. Validate your template. If Packer detects any invalid configuration, Packer will print out the file name, the error type and line number of the invalid configuration. The example configuration provided above is valid, so Packer will return nothing.
-
-```bash
 packer validate .
-```
-
-### Building the AMI
-10. Build the image with the packer build command. Packer will print output similar to what is shown below.
-```bash
 packer build .
 ```
 
-When packer is finished you will see:
-![Packer finished](assets/packer%20finished.png)
+Keep the resulting AMI ID — it's required for the Terraform step.
 
-You need the ami created for the next step on terraform, so you should keep it.
+---
 
-In AWS you can see the snapshot asociated to the AMI created by packer, going on EC2 -> snapshot.
-![Snapshot](assets/ami.png)
-
-## Terraform execution
-11. Now go to terraforms directory.
+## Terraform Execution
 ```bash
 cd /workspace/aws/terraform
-```
 
-### Terraform initialization
-12. Before running the Terraform commands, ensure you have initialized the Terraform configuration. This step downloads the necessary provider plugins.
-```bash
+# Initialize providers
 terraform init
-```
 
-### TF_VAR_ami_id
-13. Assigns the ID of the custom AMI (created by Packer) to the Terraform variable ami_id.
-Terraform uses this AMI when launching EC2 instances or Auto Scaling Groups (ASG).
-
-```bash
-export TF_VAR_ami_id=ami-x
-```
-
-### TF_VAR_rds_password
-14. Assigns the admin password for the RDS MySQL database to the Terraform variable rds_password.
-This avoids hardcoding sensitive credentials in your code.
-
-```bash
+# Set required variables
+export TF_VAR_ami_id=ami-xxxxxxxxxxxxxxxxx
 export TF_VAR_rds_password="PasswordSegura123!"
-```
 
-### Terraform Plan
-15. To see what changes Terraform will make to your AWS environment, run the following command. This generates an execution plan without making any changes.
-
-> You can use the `-out` option to save the plan to a file for later execution:
-
-```bash
+# Preview and apply
 terraform plan -out=tfplan
-```
-
-### Terraform Apply
-14. To apply the changes defined in your Terraform configuration, run the following command. This will create the networking resources in your AWS account.
-
-> After running this command, Terraform will prompt you to confirm the changes. Type `yes` to proceed.
-
-```bash
 terraform apply tfplan
-```
 
-### Terraform output
-Prints the values of output variables defined in your Terraform modules.
-For example, it can show:
-- ec2_instance_public_ip → Public IP of your EC2 instance
-- rds_endpoint → Endpoint to connect to the RDS database
-- s3_bucket_name → Name of your S3 bucket
-- alb_dns_name → DNS name of your Application Load Balancer
-
-```bash
+# View outputs (ALB DNS, RDS endpoint, S3 bucket, EC2 IP)
 terraform output
 ```
 
-When terraform is finished you'll something like:
-![Terraform finished](assets/terraform%20finished.png)
-
-If you want to access to the API, you need the alb_dns_name, so you replace the localhost:3000 for "example-alb-1756634364.eu-west-1.elb.amazonaws.com". For example:
-
+Replace `localhost:3000` with the `alb_dns_name` output to access the deployed API:
+```
 Before: http://localhost:3000/movies
+After:  http://<alb_dns_name>/movies
+```
 
-Now: http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
-
-On AWS you can see the nets in the VPC dahsborad:
-![Nets](assets/redes.png)
-
-And subnets:
-![Subnets](assets/subredes.png)
-
-## SSH conection to EC2 Instance
-To connect to the EC2 instance created by Terraform, you need to use SSH. A key pair is generated during the Terraform apply process, and you can use it to connect to the instance.
-
+### SSH Access
 ```bash
 ssh -i ec2_key.pem ubuntu@<EC2_INSTANCE_PUBLIC_IP>
 ```
 
-## Terraform Destroy
-To clean up and remove all the resources created by Terraform, you can run the destroy command. This will delete all the resources defined in your Terraform configuration.
-
+### Teardown
 ```bash
 cd aws/terraform
-```
-
-```bash
 terraform destroy
 ```
 
-## Execution:
-### GET all movies
-You obtain the movie list.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies
-```
-![GET movies](assets/GET%20movies.png)
+---
 
-### GET movie by id
-You obtain the movie id you put on the url, in case it exist.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1
-```
-![GET movie by id](assets/GET%20movie%20by%20id.png)
+## API Routes
 
-### GET ratings by movie id
-You obtain all the ratings of the movie id you put on the url, in case it exist.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1/ratings
-```
-![GET rating by movie id](assets/GET%20ratings.png)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/movies` | Public | Get all movies |
+| GET | `/movies/:id` | Public | Get movie by ID |
+| GET | `/movies/:id/ratings` | Public | Get all ratings for a movie |
+| GET | `/movies/:id/ratings/:ratingId` | Public | Get a specific rating |
+| POST | `/movies/:id/ratings` | Required | Add a rating |
+| PATCH | `/movies/:id/ratings/:ratingId` | Required | Update a rating |
+| DELETE | `/movies/:id/ratings/:ratingId` | Required | Delete a rating |
+| GET | `/watchlist/:userId` | Required | Get user watchlist |
+| POST | `/watchlist/:userId/items` | Required | Add to watchlist |
+| PATCH | `/watchlist/:userId/items/:itemId` | Required | Update watched status |
+| DELETE | `/watchlist/:userId/items/:itemId` | Required | Remove from watchlist |
 
-### GET rating by id by movie id
-You obtain the rating of the movie id and the rating id you put on the url, in case it exist.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/1/ratings/4
-```
-![GET rating by id by movie id](assets/GET%20rating%20by%20id.png)
+---
 
-### ADD rating by movie id
-You add the rating putting all the attributes in the body. You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings
-```
-![ADD rating](assets/ADD%20rating.png)
+## Terraform Modules
 
-You need to put the rating and the comment in the body:
-![ADD rating](assets/body%20add%20rating.png)
+| Module | Resource | Purpose |
+|--------|----------|---------|
+| `vpc/` | Custom VPC | Isolated private network with DNS |
+| `subnet/` | Public + Private Subnets | EC2/ALB public, RDS private |
+| `internet_gateway/` | IGW | VPC internet access |
+| `route/` | Route Tables | `0.0.0.0/0 → IGW` |
+| `alb/` | ALB + Target Group | Load balancing + health checks on `/movies` |
+| `asg/` | Launch Template + ASG | Auto-scaling 1–2 instances |
+| `ec2_instance/` | EC2 | Direct instance with SSH + user_data |
+| `rds/` | RDS MySQL 8.0 | Managed DB in private subnets |
+| `s3/` | S3 Bucket | Object storage with AES256 + versioning |
+| `security_group_rule/` | Security Groups | Reusable virtual firewall rules |
 
-### UPDATE rating by movie id and rating id
-You update the rating putting the id in the url and changing the comment and/or the rating. You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings
-```
-![UPDATE rating](assets/Update%20rating.png)
+---
 
-You don't need to put the rating or the comment to update:
-![UPDATE rating](assets/body%20update%20rating.png)
+## What I Learned Building This
 
-### DELETE rating by movie id and rating id
-You delete the rating putting the id in the url. You need authorization.
-```bash
-curl http:/example-alb-1756634364.eu-west-1.elb.amazonaws.com/movies/5/ratings/11
-```
-![DELETE rating](assets/Delete%20rating.png)
+### Infrastructure as Code Mindset
+The biggest shift was thinking declaratively — describing *what* infrastructure should exist rather than *how* to create it. Terraform's state model made me understand why reproducibility matters: the same configuration applied twice should produce identical results.
 
-### GET watchlist by user id
-You get all the watchlist of the user you put the id in th url. You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1
-```
-![GET watchlist](assets/GET%20watchlist.png)
+### Immutable Infrastructure with Packer
+Pre-baking AMIs eliminates the fragility of bootstrapping scripts. If a script fails halfway through on instance launch, the instance is in an unknown state. With a Packer-built AMI, the image is either ready or it isn't — there's no in-between.
 
-### ADD watchlist by user id
-You create a watchlist for the user put the id in the url. You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items
-```
-![ADD watchlist](assets/ADD%20watchlist.png)
+### Network Segmentation in Practice
+Putting RDS in private subnets with security groups that only allow traffic from EC2 security groups made abstract security concepts concrete. The database is physically unreachable from the internet — not just password-protected.
 
-You need to put the id of the movie of which you can add the watchlist:
-![ADD watchlist](assets/body%20add%20watchlist.png)
+### Modular Terraform Architecture
+Extracting each AWS resource into its own module forced clean interfaces between components. It also made it much easier to reason about what each piece does and to reuse modules across environments.
 
-### UPDATE watchlist by user id and watchlist id
-You update the watchlist of the user you put the id in the url with the id of the watchlist. You only update the attribute "watched". You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items/10
-```
-![UPDATE watchlist](assets/Update%20watchlist.png)
+### Sensitive Variable Handling
+Using `TF_VAR_*` environment variables instead of hardcoded values in `.tf` files was a key practice — secrets never end up in version control, yet Terraform picks them up automatically at runtime.
 
-You need to put the attribute wacthed, changing the value:
-![UPDATE watchlist](assets/body%20update%20watchlist.png)
+---
 
-### DELETE watchlist by user id and watchlist id
-You delete a watchlist of the user put the id in the url. You need authorization.
-```bash
-curl http://example-alb-1756634364.eu-west-1.elb.amazonaws.com/watchlist/1/items/10
-```
-![DELETE watchlist](assets/Delete%20watchlist.png)
+## Future Improvements
 
-### Bad authorization
-For example, if you don't put the api key as a header or is wrong, you won't be able to do the method.
-![GET movies](assets/bad%20auth.png)
+### Short Term
+- **HTTPS** — add ACM certificate and HTTPS listener on the ALB
+- **Secrets Manager** — store RDS credentials in AWS Secrets Manager instead of env vars
+- **Automated tests** — integrate API tests into the CI pipeline
 
+### Medium Term
+- **CI/CD pipeline** — GitHub Actions workflow to build, test, and deploy on push
+- **CloudWatch** — add monitoring, alarms, and log groups for EC2 and RDS
+- **Multi-environment** — separate `dev`, `staging`, and `prod` Terraform workspaces
 
-## Key backend concepts demonstrated
-- RESTful API design
-- Layered architecture
-- Authentication middleware
-- Database aggregation queries
-- Pagination patterns
-- Validation with Joi
-- Error handling best practices
-- Business rule enforcement
-- Separation of concerns
+### Long Term
+- **ECS/Fargate** — replace EC2 + ASG with a managed container orchestration layer
+- **RDS Multi-AZ** — enable standby replica for high availability
+- **Terraform Cloud** — remote state management and team collaboration
 
-## Key cloud and infrastructure concepts demonstrated
-- Infrastructure as Code (IaC) using Terraform
-- Immutable infrastructure with Packer
-- Custom AMI creation on Amazon Web Services
+---
+
+## Key Concepts Demonstrated
+
+### Backend
+- RESTful API design with layered architecture
+- Authentication middleware and JWT validation
+- Database aggregation queries and pagination
+- Validation with Joi and error handling best practices
+
+### Cloud & Infrastructure
+- Infrastructure as Code (IaC) with Terraform
+- Immutable infrastructure with Packer and custom AMIs
 - Containerized deployment with Docker
-- Virtual Private Cloud (VPC) network design
-- Public and private subnet segmentation
-- Internet Gateway and route table configuration
+- VPC design with public/private subnet segmentation
 - Security Groups with granular ingress/egress rules
-- Application Load Balancer (ALB) architecture
-- Target Groups and health checks configuration
-- Auto Scaling Group (ASG) with Launch Templates
-- Bootstrapping instances via user_data
-- Managed relational database provisioning with Amazon RDS (MySQL 8)
-- Private database access restricted by security groups
-- S3 bucket provisioning with versioning and server-side encryption
-- Key pair generation and SSH access management
-- Modular Terraform architecture (reusable modules)
-- Sensitive variable handling via environment variables (TF_VAR_*)
+- ALB with Target Groups and health checks
+- Auto Scaling Group with Launch Templates
+- Managed RDS provisioning in private subnets
+- S3 with versioning and server-side encryption
+- Modular Terraform architecture with reusable modules
+- Sensitive variable handling via `TF_VAR_*`
 - Multi-AZ subnet distribution for high availability
-- Separation of application layer and infrastructure layer
-- Declarative resource provisioning and state management
 
-## What did I learn?
-This project has helped me learn how to create an API from scratch. I've also learned how to do it using Packer and Terraform. Although the cloud part is quite complex and not something a junior programmer can easily do, little by little I've come to understand what each part does, and how each part individually forms the whole.
+---
+
+## License
+
+MIT — free to use, modify, and deploy.
+
+---
 
 ## Author
-Adrián Martín Malmierca 
 
-Computer Engineer & Mobile Applications Master's Student
+**Adrián Martín Malmierca**  
+Computer Engineer & Mobile Applications Master's Student  
+[GitHub](https://github.com/AdrianMalmierca) · [LinkedIn](https://www.linkedin.com/in/adri%C3%A1n-mart%C3%ADn-malmierca-4aa6b0293/)
+
+*Built as a portfolio project to demonstrate cloud infrastructure skills targeting the French tech market — ESNs and consulting firms in Burgundy/Dijon.*
